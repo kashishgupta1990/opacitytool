@@ -13,6 +13,9 @@ if (argv.src && argv.dest && argv.o) {
         var destDirPath = path.join(argv.dest, fileName);
 
         var lenna = new Jimp(sourcePath, function (err, image) {
+            if(err){
+                throw err;
+            }
             this.opacity(+argv.o).write(destDirPath); // save again
             console.log('Source File: ' + sourcePath);
             console.log('Success Converted Saved: ' + destDirPath);
@@ -22,5 +25,5 @@ if (argv.src && argv.dest && argv.o) {
 } else {
     console.log('Insufficient Arguments');
     console.log('opacitytool --src EnterSourceFolderPath --dest EnterDestinationFolderPath --o OpacityLevel');
-    console.log('Example:  --src /dest --dest /reselt --o 0.5');
+    console.log('Example:opacitytool  --src /dest --dest /reselt --o 0.5');
 }
