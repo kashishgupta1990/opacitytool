@@ -1,6 +1,6 @@
 {
   "name": "opacitytool",
-  "version": "0.0.2",
+  "version": "0.2.0",
   "dependencies": {
     "async": "^1.4.0",
     "cli-color": "^1.0.0",
