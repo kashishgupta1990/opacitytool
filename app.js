@@ -4,26 +4,64 @@ var Jimp = require("jimp");
 var argv = require("optimist").argv;
 var fs = require("fs");
 var path = require("path");
+var async = require('async');
+var clc = require('cli-color');
 
-if (argv.src && argv.dest && argv.o) {
+
+if (argv.source && argv.destination && argv.opacity && argv.report) {
+    var tasks = [];
+    var srcdir = argv.source;
+    var destdir = argv.destination;
+    var opacityValue = +argv.opacity;
+    var reportFile = argv.report;
+
     console.log('File Conversion Started');
-    var readFiles = fs.readdirSync(argv.src);
-    readFiles.forEach(function (fileName) {
-        var sourcePath = path.join(argv.src, fileName);
-        var destDirPath = path.join(argv.dest, fileName);
-
-        var lenna = new Jimp(sourcePath, function (err, image) {
-            if(err){
-                throw err;
+    fs.readdir(srcdir, function (error, files) {
+        files.forEach(function (file) {
+            if (file.match(/.png/)) {
+                tasks.push(function (callback) {
+                    var srcFilePath = path.join(srcdir, file);
+                    var destFilePath = path.join(destdir, file);
+                    var status = 'SUCCESS File: "' + srcFilePath + '" to PATH: "' + destFilePath + '"\n';
+                    var lenna = new Jimp(srcFilePath, function (err, image) {
+                        if (err) {
+                            throw err;
+                        } else {
+                            this.opacity(opacityValue).write(destFilePath);
+                        }
+                        fs.appendFile(reportFile, status, function (err) {
+                            if (err) {
+                                console.log(err);
+                            } else {
+                                console.log(clc.green(status));
+                            }
+                        });
+                        callback(err, status);
+                    })
+                });
+            } else {
+                var message = 'SKIP FILE: ' + path.join(srcdir, file) + '\n';
+                fs.appendFile(reportFile, message, function (err) {
+                    if (err) {
+                        console.log(err);
+                    } else {
+                        console.log(clc.yellow(message));
+                    }
+                });
             }
-            this.opacity(+argv.o).write(destDirPath); // save again
-            console.log('Source File: ' + sourcePath);
-            console.log('Success Converted Saved: ' + destDirPath);
+        });
+        async.series(tasks, function (error, data) {
+            if (error) {
+                console.log(clc.red(JSON.stringify(error)));
+            } else {
+                console.log(clc.blue('Conversion Successfully Completed \nYou can find Status Report on FILE: ' + reportFile));
+            }
         });
     });
-    console.log('Conversion Process Completed');
 } else {
     console.log('Insufficient Arguments');
-    console.log('opacitytool --src EnterSourceFolderPath --dest EnterDestinationFolderPath --o OpacityLevel');
-    console.log('Example:opacitytool  --src /dest --dest /reselt --o 0.5');
+    console.log('opacitytool --source EnterSourceFolderPath --destination EnterDestinationFolderPath --opacity OpacityLevel --report ReportFilePath');
+    console.log('Example: opacitytool --source ./src --destination ./dest --opacity 0.5 --report ./report.txt');
 }
+
+
